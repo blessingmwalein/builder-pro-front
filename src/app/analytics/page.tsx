@@ -10,7 +10,7 @@ import {
   CurrencyDollarIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
@@ -77,7 +77,7 @@ const priorityColors = {
 
 const typeIcons = {
   cost_saving: CurrencyDollarIcon,
-  efficiency: TrendingUpIcon,
+  efficiency: ArrowTrendingUpIcon,
   risk: ExclamationTriangleIcon,
   recommendation: LightBulbIcon,
 };

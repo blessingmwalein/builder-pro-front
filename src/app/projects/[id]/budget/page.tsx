@@ -7,7 +7,7 @@ import { BudgetOverview } from '@/components/budget/BudgetOverview';
 import { BudgetTable } from '@/components/budget/BudgetTable';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
-import { fetchBudgetData } from '@/lib/features/budget/budgetSlice';
+import { fetchBudgetItems } from '@/lib/features/budget/budgetSlice';
 import {
   CurrencyDollarIcon,
   ChartBarIcon,
@@ -25,7 +25,7 @@ export default function ProjectBudgetPage() {
 
   useEffect(() => {
     if (currentCompany) {
-      dispatch(fetchBudgetData({ companyId: currentCompany.id, projectId }));
+      dispatch(fetchBudgetItems({ companyId: currentCompany.id, projectId }));
     }
   }, [dispatch, currentCompany, projectId]);
 
