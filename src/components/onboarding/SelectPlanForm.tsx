@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { setOnboardingStep } from '@/lib/features/auth/authSlice';
 import { fetchPlans, selectPlan } from '@/lib/features/company/companySlice';

@@ -5,7 +5,7 @@ import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TaskColumn } from '@/components/tasks/TaskColumn';
 import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchTaskLists, fetchTasks, moveTask } from '@/lib/features/task/taskSlice';
 import { fetchCompanyUsers } from '@/lib/features/company/companySlice';

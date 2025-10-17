@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchDailyLogs } from '@/lib/features/dailyLog/dailyLogSlice';
 import { format } from 'date-fns';

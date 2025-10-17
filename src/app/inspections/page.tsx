@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchInspections, fetchInspectionSummary } from '@/lib/features/inspection/inspectionSlice';
 import { format } from 'date-fns';

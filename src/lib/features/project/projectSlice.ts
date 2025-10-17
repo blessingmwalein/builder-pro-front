@@ -1,10 +1,30 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Project, ProjectStats } from '@/types';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getJson, postJson, putJson } from '@/lib/api';
+import type { RootState } from '@/lib/store';
+
+export interface Project {
+  id: number;
+  company_id: number;
+  code: string;
+  title: string;
+  description: string;
+  status: 'planned' | 'in_progress' | 'on_hold' | 'completed' | 'archived';
+  location_text: string;
+  latitude: number | string;
+  longitude: number | string;
+  budget_total_cents: number;
+  currency: string;
+  start_date: string;
+  end_date: string;
+  cover_image_url?: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
 
 interface ProjectState {
   projects: Project[];
   currentProject: Project | null;
-  stats: ProjectStats | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -12,82 +32,59 @@ interface ProjectState {
 const initialState: ProjectState = {
   projects: [],
   currentProject: null,
-  stats: null,
   isLoading: false,
   error: null,
 };
 
-// Mock async thunks
+// Fetch all projects for a company
 export const fetchProjects = createAsyncThunk(
   'project/fetchProjects',
-  async (companyId: number) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // Mock projects data
-    return [
-      {
-        id: 1,
-        name: 'Website Redesign',
-        description: 'Complete redesign of company website with modern UI/UX',
-        start_date: '2024-01-01',
-        end_date: '2024-06-30',
-        status: 'active' as const,
-        company_id: companyId,
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-      },
-      {
-        id: 2,
-        name: 'Mobile App Development',
-        description: 'Native mobile application for iOS and Android',
-        start_date: '2024-02-01',
-        end_date: '2024-08-31',
-        status: 'active' as const,
-        company_id: companyId,
-        created_at: '2024-02-01T00:00:00Z',
-        updated_at: '2024-02-01T00:00:00Z',
-      },
-      {
-        id: 3,
-        name: 'Office Renovation',
-        description: 'Complete renovation of headquarters office space',
-        start_date: '2023-10-01',
-        end_date: '2023-12-31',
-        status: 'completed' as const,
-        company_id: companyId,
-        created_at: '2023-10-01T00:00:00Z',
-        updated_at: '2023-12-31T00:00:00Z',
-      },
-    ];
+  async (companyId: number, { rejectWithValue }) => {
+    try {
+      const res = await getJson<{ success: boolean; data: Project[] }>(`/companies/${companyId}/projects`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to fetch projects');
+    }
   }
 );
 
+// Fetch a single project
+export const fetchProject = createAsyncThunk(
+  'project/fetchProject',
+  async ({ companyId, projectId }: { companyId: number; projectId: number }, { rejectWithValue }) => {
+    try {
+      const res = await getJson<{ success: boolean; data: Project }>(`/companies/${companyId}/projects/${projectId}`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to fetch project');
+    }
+  }
+);
+
+// Create a project
 export const createProject = createAsyncThunk(
   'project/createProject',
-  async ({ companyId, projectData }: { companyId: number; projectData: Omit<Project, 'id' | 'company_id' | 'created_at' | 'updated_at'> }) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      id: Date.now(),
-      ...projectData,
-      company_id: companyId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+  async ({ companyId, data }: { companyId: number; data: any }, { rejectWithValue }) => {
+    try {
+      const res = await postJson<{ success: boolean; data: Project }>(`/companies/${companyId}/projects`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to create project');
+    }
   }
 );
 
-export const fetchProjectStats = createAsyncThunk(
-  'project/fetchStats',
-  async ({ companyId, projectId }: { companyId: number; projectId: number }) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {
-      total_tasks: 45,
-      completed_tasks: 32,
-      pending_tasks: 8,
-      in_progress_tasks: 5,
-      total_budget: 150000,
-      spent_budget: 87500,
-      team_members: 8,
-    };
+// Update a project
+export const updateProject = createAsyncThunk(
+  'project/updateProject',
+  async ({ companyId, projectId, data }: { companyId: number; projectId: number; data: any }, { rejectWithValue }) => {
+    try {
+      const res = await putJson<{ success: boolean; data: Project }>(`/companies/${companyId}/projects/${projectId}`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to update project');
+    }
   }
 );
 
@@ -95,31 +92,15 @@ const projectSlice = createSlice({
   name: 'project',
   initialState,
   reducers: {
-    setCurrentProject: (state, action: PayloadAction<Project>) => {
+    setCurrentProject(state, action) {
       state.currentProject = action.payload;
     },
-    clearError: (state) => {
+    clearProjectError(state) {
       state.error = null;
-    },
-    updateProject: (state, action: PayloadAction<Partial<Project> & { id: number }>) => {
-      const index = state.projects.findIndex(p => p.id === action.payload.id);
-      if (index !== -1) {
-        state.projects[index] = { ...state.projects[index], ...action.payload };
-      }
-      if (state.currentProject?.id === action.payload.id) {
-        state.currentProject = { ...state.currentProject, ...action.payload };
-      }
-    },
-    removeProject: (state, action: PayloadAction<number>) => {
-      state.projects = state.projects.filter(p => p.id !== action.payload);
-      if (state.currentProject?.id === action.payload) {
-        state.currentProject = null;
-      }
     },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch projects
       .addCase(fetchProjects.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -130,28 +111,24 @@ const projectSlice = createSlice({
       })
       .addCase(fetchProjects.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch projects';
+        state.error = action.payload as string;
       })
-      // Create project
-      .addCase(createProject.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(fetchProject.fulfilled, (state, action) => {
+        state.currentProject = action.payload;
       })
       .addCase(createProject.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.projects.push(action.payload);
+        state.projects.unshift(action.payload);
       })
-      .addCase(createProject.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.error.message || 'Failed to create project';
-      })
-      // Fetch stats
-      .addCase(fetchProjectStats.fulfilled, (state, action) => {
-        state.stats = action.payload;
+      .addCase(updateProject.fulfilled, (state, action) => {
+        const idx = state.projects.findIndex(p => p.id === action.payload.id);
+        if (idx !== -1) state.projects[idx] = action.payload;
+        if (state.currentProject?.id === action.payload.id) {
+          state.currentProject = action.payload;
+        }
       });
   },
 });
 
-export const { setCurrentProject, clearError, updateProject, removeProject } = projectSlice.actions;
+export const { setCurrentProject, clearProjectError } = projectSlice.actions;
 export default projectSlice.reducer;
 

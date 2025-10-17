@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchNotifications, markAsRead, markAllAsRead } from '@/lib/features/notification/notificationSlice';
 import { formatDistanceToNow } from 'date-fns';

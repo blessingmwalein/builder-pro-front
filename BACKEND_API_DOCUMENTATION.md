@@ -40,7 +40,7 @@ Error responses:
 ## 1. Authentication Endpoints
 
 ### 1.1 User Registration
-**POST** `/auth/register`
+**POST** `/auth/register-user`
 
 **Request Body:**
 ```json

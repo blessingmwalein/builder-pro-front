@@ -222,10 +222,13 @@ export interface PaginatedResponse<T> {
 
 // Form types
 export interface RegisterForm {
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   password: string;
   password_confirmation: string;
+  device_name: string;
+  terms?: boolean;
 }
 
 export interface LoginForm {
@@ -296,6 +299,7 @@ export interface CreateTaskForm {
   assignee_id?: number;
   priority: string;
   due_date?: string;
+  start_date?: string;
 }
 
 export interface CreateExpenseForm {

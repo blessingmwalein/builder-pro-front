@@ -46,21 +46,16 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          <div className="lg:hidden mb-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <BuildingOfficeIcon className="h-8 w-8 text-blue-600 mr-2" />
-              <h1 className="text-2xl font-bold text-gray-900">Builder Pro</h1>
-            </div>
-          </div>
+      <div className="flex-1 flex flex-col justify-center">
+        <div className="mx-auto w-full  lg:w-96 mt-8">
           
-          <div>
+          
+          {/* <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">{title}</h2>
             {subtitle && (
               <p className="text-gray-600 mb-8">{subtitle}</p>
             )}
-          </div>
+          </div> */}
 
           {children}
         </div>

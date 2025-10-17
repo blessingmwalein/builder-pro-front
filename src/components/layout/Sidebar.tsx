@@ -22,13 +22,15 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Projects', href: '/projects', icon: FolderIcon },
   { name: 'Tasks', href: '/tasks', icon: CheckIcon },
-  { name: 'Budget', href: '/budget', icon: CurrencyDollarIcon },
-  { name: 'Expenses', href: '/expenses', icon: CurrencyDollarIcon },
-  { name: 'Inspections', href: '/inspections', icon: ClipboardDocumentListIcon },
-  { name: 'Daily Logs', href: '/daily-logs', icon: ClipboardDocumentListIcon },
-  { name: 'Site Photos', href: '/photos', icon: CameraIcon },
-  { name: 'Team Chat', href: '/chat', icon: ChatBubbleLeftRightIcon },
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+  // { name: 'Companies', href: '/companies', icon: CheckIcon },
+
+  // { name: 'Budget', href: '/budget', icon: CurrencyDollarIcon },
+  // { name: 'Expenses', href: '/expenses', icon: CurrencyDollarIcon },
+  // { name: 'Inspections', href: '/inspections', icon: ClipboardDocumentListIcon },
+  // { name: 'Daily Logs', href: '/daily-logs', icon: ClipboardDocumentListIcon },
+  // { name: 'Site Photos', href: '/photos', icon: CameraIcon },
+  // { name: 'Team Chat', href: '/chat', icon: ChatBubbleLeftRightIcon },
+  // { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
 ];
 
 const secondaryNavigation = [

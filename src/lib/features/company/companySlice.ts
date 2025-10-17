@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Company, User, ApiResponse, Plan } from '@/types';
-import { postJson, getJson } from '@/lib/api';
+import { postJson, getJson, apiFetch, putJson } from '@/lib/api';
 
 interface CompanyState {
   currentCompany: Company | null;
@@ -45,57 +45,52 @@ export const selectPlan = createAsyncThunk(
   }
 );
 
-export const fetchCompanyUsers = createAsyncThunk(
-  'company/fetchUsers',
-  async (companyId: number) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // Mock users data
-    return [
-      {
-        id: 1,
-        name: 'John Doe',
-        email: 'john@example.com',
-        role: 'admin' as const,
-        position: 'Project Manager',
-        phone: '+1234567890',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        role: 'project_manager' as const,
-        position: 'Senior Developer',
-        phone: '+1234567891',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: 3,
-        name: 'Bob Wilson',
-        email: 'bob@example.com',
-        role: 'site_supervisor' as const,
-        position: 'Site Supervisor',
-        phone: '+1234567892',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
+export const fetchCompanies = createAsyncThunk(
+  'company/fetchCompanies',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await apiFetch('/admin/companies');
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to fetch companies');
+    }
   }
 );
 
-export const inviteUser = createAsyncThunk(
-  'company/inviteUser',
-  async ({ companyId, userData }: { companyId: number; userData: { email: string; name: string; role: string } }) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      id: Date.now(),
-      ...userData,
-      role: userData.role as User['role'],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+export const fetchCompanyUsers = createAsyncThunk(
+  'company/fetchCompanyUsers',
+  async (companyId: number, { rejectWithValue }) => {
+    try {
+      const res = await apiFetch(`/companies/${companyId}/users`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to fetch company users');
+    }
+  }
+);
+
+//update this to use post json postJson
+export const updateCompany = createAsyncThunk(
+  'company/updateCompany',
+  async ({ companyId, data }: { companyId: number; data: any }, { rejectWithValue }) => {
+    try {
+      const res = await putJson(`/admin/companies/${companyId}`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to update company');
+    }
+  }
+);
+
+export const addCompanyUser = createAsyncThunk(
+  'company/addCompanyUser',
+  async ({ companyId, data }: { companyId: number; data: any }, { rejectWithValue }) => {
+    try {
+      const res = await postJson(`/companies/${companyId}/users`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to add user');
+    }
   }
 );
 
@@ -155,6 +150,18 @@ const companySlice = createSlice({
         state.isLoading = false;
         state.error = action.error.message || 'Failed to select plan';
       })
+      // Fetch companies
+      .addCase(fetchCompanies.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchCompanies.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.companies = action.payload;
+      })
+      .addCase(fetchCompanies.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
       // Fetch users
       .addCase(fetchCompanyUsers.pending, (state) => {
         state.isLoading = true;
@@ -166,10 +173,6 @@ const companySlice = createSlice({
       .addCase(fetchCompanyUsers.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Failed to fetch users';
-      })
-      // Invite user
-      .addCase(inviteUser.fulfilled, (state, action) => {
-        state.users.push(action.payload);
       });
   },
 });

@@ -1,278 +1,225 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { useAppSelector, useAppDispatch } from '@/lib/hooks';
-import { Button } from '@/components/ui/Button';
-import { CompleteProfileForm as CompleteProfileFormType } from '@/types';
-import { completeProfile, fetchProfile } from '@/lib/features/auth/authSlice';
-import toast from 'react-hot-toast';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { UserCircleIcon, ShieldCheckIcon, CreditCardIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import { useAppSelector } from '@/lib/hooks';
 import { format } from 'date-fns';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+
+const TABS = [
+  {
+    key: 'personal',
+    label: 'Personal Info',
+    icon: (
+      <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-orange-100">
+        <svg className="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </span>
+    ),
+  },
+  {
+    key: 'company',
+    label: 'Company Info',
+    icon: (
+      <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-green-100">
+        <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </span>
+    ),
+  },
+  {
+    key: 'actions',
+    label: 'Quick Actions',
+    icon: (
+      <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-100">
+        <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </span>
+    ),
+  },
+];
 
 export default function ProfilePage() {
-  const dispatch = useAppDispatch();
-  const { user, activePlan, isLoading } = useAppSelector((s) => s.auth);
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'plan' | 'security'>('profile');
-  const [form, setForm] = useState<CompleteProfileFormType>({
-    name: user?.name ?? '',
-    phone: user?.phone ?? '',
-    position: user?.position ?? '',
-    account_type: user?.account_type ?? 'company',
-    avatar_url: user?.avatar_url ?? undefined,
-  } as any);
+  const { user, isLoading, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [activeTab, setActiveTab] = useState('personal');
 
-  const bannerColor = useMemo(() => {
-    return 'from-blue-600 to-cyan-500';
-  }, []);
-
-  const onSubmit = async () => {
-    try {
-      await dispatch(completeProfile(form)).unwrap();
-      await dispatch(fetchProfile());
-      toast.success('Profile updated');
-      setIsEditing(false);
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to update profile');
-    }
-  };
-
-  const formatMaybeDate = (iso?: string | null) => {
-    if (!iso) return '-';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return format(d, 'PPpp');
-  };
-
-  const SecurityForm = (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label className="text-sm">
-          <span className="block text-gray-700 mb-1">Current password</span>
-          <input className="w-full border rounded px-3 py-2" type="password" placeholder="••••••••" />
-        </label>
-        <div />
-        <label className="text-sm">
-          <span className="block text-gray-700 mb-1">New password</span>
-          <input className="w-full border rounded px-3 py-2" type="password" placeholder="At least 8 characters" />
-        </label>
-        <label className="text-sm">
-          <span className="block text-gray-700 mb-1">Confirm new password</span>
-          <input className="w-full border rounded px-3 py-2" type="password" placeholder="Repeat new password" />
-        </label>
-      </div>
-      <Button onClick={() => toast.success('Password change submitted')}>Change password</Button>
-    </div>
-  );
-
-  if (!user) {
+  if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="p-6">
-          <h1 className="text-xl font-semibold mb-2">Profile</h1>
-          <p className="text-gray-600">You are not logged in.</p>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500 mx-auto"></div>
+            <p className="mt-4 text-lg text-gray-600">Loading profile...</p>
+          </div>
         </div>
       </DashboardLayout>
     );
   }
 
+  if (!isAuthenticated || !user) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="mt-4 text-xl font-semibold text-gray-900">Profile Not Found</h2>
+            <p className="mt-2 text-gray-600">You are not logged in.</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Not set';
+    try {
+      return format(new Date(dateString), 'PPpp');
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
+  const personalInfo = [
+    { label: 'User ID', value: `#${user.id}` },
+    { label: 'Full Name', value: user.name || 'Not set' },
+    { label: 'Email', value: user.email || 'Not set' },
+    { label: 'Phone', value: user.phone || 'Not set' },
+    { label: 'Position', value: user.position || 'Not set' },
+    { label: 'Account Type', value: user.account_type || 'Not set' },
+    { label: 'Created', value: formatDate(user.created_at) },
+  ];
+
+  const companyInfo = user.company ? [
+    { label: 'Company Name', value: user.company.name },
+    { label: 'Status', value: user.company.status },
+    { label: 'Country', value: user.company.country },
+    { label: 'Currency', value: user.company.currency },
+    { label: 'Your Role', value: user.company.pivot?.role || 'Member' },
+  ] : [];
+
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Banner and avatar */}
-        <div className={`rounded-xl h-36 bg-gradient-to-r ${bannerColor} relative overflow-hidden`}></div>
-        <div className="relative -mt-10 pl-4 sm:pl-6 lg:pl-8 flex items-center">
-          <div className="h-20 w-20 rounded-full ring-4 ring-white bg-gray-200 overflow-hidden flex items-center justify-center">
-            {user.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.avatar_url} alt={user.name} className="h-full w-full object-cover" />
-            ) : (
-              <UserCircleIcon className="h-16 w-16 text-gray-400" />
-            )}
+      <div className="space-y-6 px-8">
+        {/* Profile Header */}
+        <div className="flex items-center space-x-6 mb-6">
+          <div className="h-24 w-24 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-3xl font-bold text-white">
+              {user.name?.charAt(0)?.toUpperCase() || 'U'}
+            </span>
           </div>
-          <div className="ml-4">
-            <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-            <p className="text-gray-600">{user.email}</p>
-          </div>
-          <div className="ml-auto pr-4 sm:pr-6 lg:pr-8">
-            <Button variant="secondary" onClick={() => setIsEditing(true)}>
-              <span className="inline-flex items-center">
-                <PhotoIcon className="w-4 h-4 mr-2" /> Edit profile
-              </span>
-            </Button>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+            <p className="text-lg text-gray-600">{user.position || 'No position set'}</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mt-8">
-          <div className="flex space-x-2 border-b">
-            <button
-              className={`px-4 py-2 text-sm font-medium ${activeTab === 'profile' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              <span className="inline-flex items-center">
-                <UserCircleIcon className="w-4 h-4 mr-2" /> Profile
-              </span>
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium ${activeTab === 'plan' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
-              onClick={() => setActiveTab('plan')}
-            >
-              <span className="inline-flex items-center">
-                <CreditCardIcon className="w-4 h-4 mr-2" /> Plan
-              </span>
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium ${activeTab === 'security' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
-              onClick={() => setActiveTab('security')}
-            >
-              <span className="inline-flex items-center">
-                <ShieldCheckIcon className="w-4 h-4 mr-2" /> Security
-              </span>
-            </button>
-          </div>
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-all duration-150 ${
+                  activeTab === tab.key
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-orange-600 hover:border-orange-300'
+                }`}
+                type="button"
+              >
+                {tab.icon}
+                <span className="ml-3">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
 
-          <div className="mt-6">
-            {activeTab === 'profile' && (
-              <div className="bg-white border rounded-lg p-4 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Full name</div>
-                    <div className="text-gray-900">{user.name}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Email</div>
-                    <div className="text-gray-900">{user.email}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Phone</div>
-                    <div className="text-gray-900">{user.phone || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Position</div>
-                    <div className="text-gray-900">{user.position || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Account type</div>
-                    <div className="text-gray-900">{user.account_type || '-'}</div>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Tab Content */}
+        <div>
+          {activeTab === 'personal' && (
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {personalInfo.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-50">
+                        {item.label}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.value}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-            {activeTab === 'plan' && (
-              <div className="bg-white border rounded-lg p-4 space-y-4">
-                {activePlan ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-gray-500">Plan</div>
-                      <div className="text-gray-900">{activePlan.plan.name} · {activePlan.plan.currency}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Price</div>
-                      <div className="text-gray-900">${(activePlan.plan.price_cents / 100).toFixed(2)} / {activePlan.plan.interval}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Status</div>
-                      <div className="text-gray-900">{activePlan.status}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Current period start</div>
-                      <div className="text-gray-900">{formatMaybeDate(activePlan.current_period_start)}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Current period end</div>
-                      <div className="text-gray-900">{formatMaybeDate(activePlan.current_period_end)}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-gray-600">No active plan</div>
-                )}
-              </div>
-            )}
+          {activeTab === 'company' && user.company && (
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {companyInfo.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-50">
+                        {item.label}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.value}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-            {activeTab === 'security' && (
-              <div className="bg-white border rounded-lg p-4">
-                {SecurityForm}
+          {activeTab === 'actions' && (
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button className="bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                  <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-orange-100 mr-2">
+                    <svg className="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </span>
+                  Edit Profile
+                </button>
+                <button className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                  <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 mr-2">
+                    <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </span>
+                  Change Password
+                </button>
+                <button className="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                  <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100 mr-2">
+                    <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                  Verify Email
+                </button>
+                <button className="bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                  <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-red-100 mr-2">
+                    <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </span>
+                  Logout
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {isEditing && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-4 space-y-4">
-            <h3 className="text-lg font-semibold">Edit Profile</h3>
-
-            <div className="grid grid-cols-1 gap-3">
-              <label className="text-sm">
-                <span className="block text-gray-700 mb-1">Full name</span>
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  value={form.name || ''}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm">
-                <span className="block text-gray-700 mb-1">Phone</span>
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm">
-                <span className="block text-gray-700 mb-1">Position</span>
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  value={form.position}
-                  onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm">
-                <span className="block text-gray-700 mb-1">Avatar URL</span>
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="https://..."
-                  value={form.avatar_url || ''}
-                  onChange={(e) => setForm((f) => ({ ...f, avatar_url: e.target.value }))}
-                />
-              </label>
-              <div className="text-sm">
-                <span className="block text-gray-700 mb-1">Account type</span>
-                <div className="flex items-center space-x-6">
-                  <label className="inline-flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      checked={(form.account_type || 'company') === 'company'}
-                      onChange={() => setForm((f) => ({ ...f, account_type: 'company' }))}
-                    />
-                    <span>Company</span>
-                  </label>
-                  <label className="inline-flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      checked={form.account_type === 'individual'}
-                      onChange={() => setForm((f) => ({ ...f, account_type: 'individual' }))}
-                    />
-                    <span>Individual</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <Button variant="secondary" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-              <Button onClick={onSubmit} isLoading={isLoading}>Save</Button>
-            </div>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 }

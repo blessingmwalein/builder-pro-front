@@ -1,5 +1,33 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Task, TaskList } from '@/types';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getJson, postJson, putJson, deleteRequest } from '@/lib/api';
+
+export interface TaskList {
+  id: number;
+  project_id: number;
+  name: string;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Task {
+  id: number;
+  project_id: number;
+  task_list_id: number;
+  parent_task_id: number | null;
+  title: string;
+  description: string;
+  status: 'todo' | 'in_progress' | 'blocked' | 'done';
+  priority: string;
+  start_date: string;
+  due_date: string;
+  assignee_id: number | null;
+  progress_pct: number;
+  estimate_hours: number | string;
+  actual_hours: number | string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface TaskState {
   taskLists: TaskList[];
@@ -15,160 +43,171 @@ const initialState: TaskState = {
   error: null,
 };
 
+// Fetch all task lists for a project
 export const fetchTaskLists = createAsyncThunk(
   'task/fetchTaskLists',
-  async ({ companyId, projectId }: { companyId: number; projectId: number }) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [
-      {
-        id: 1,
-        name: 'To Do',
-        description: 'Tasks to be started',
-        project_id: projectId,
-        order_index: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        name: 'In Progress',
-        description: 'Tasks currently being worked on',
-        project_id: projectId,
-        order_index: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: 3,
-        name: 'Done',
-        description: 'Completed tasks',
-        project_id: projectId,
-        order_index: 2,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
+  async ({ companyId, projectId }: { companyId: number; projectId: number }, { rejectWithValue }) => {
+    try {
+      const res = await getJson<{ data: TaskList[] }>(`/companies/${companyId}/projects/${projectId}/task-lists`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to fetch task lists');
+    }
   }
 );
 
+// Create a task list
+export const createTaskList = createAsyncThunk(
+  'task/createTaskList',
+  async ({ companyId, projectId, data }: { companyId: number; projectId: number; data: Partial<TaskList> }, { rejectWithValue }) => {
+    try {
+      const res = await postJson<{ data: TaskList }>(`/companies/${companyId}/projects/${projectId}/task-lists`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to create task list');
+    }
+  }
+);
+
+// Update a task list
+export const updateTaskList = createAsyncThunk(
+  'task/updateTaskList',
+  async ({ companyId, projectId, taskListId, data }: { companyId: number; projectId: number; taskListId: number; data: Partial<TaskList> }, { rejectWithValue }) => {
+    try {
+      const res = await putJson<{ data: TaskList }>(`/companies/${companyId}/projects/${projectId}/task-lists/${taskListId}`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to update task list');
+    }
+  }
+);
+
+// Delete a task list
+export const deleteTaskList = createAsyncThunk(
+  'task/deleteTaskList',
+  async ({ companyId, projectId, taskListId }: { companyId: number; projectId: number; taskListId: number }, { rejectWithValue }) => {
+    try {
+      await deleteRequest(`/companies/${companyId}/projects/${projectId}/task-lists/${taskListId}`);
+      return taskListId;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to delete task list');
+    }
+  }
+);
+
+// Reorder (move) a task list
+export const moveTaskList = createAsyncThunk(
+  'task/moveTaskList',
+  async ({ companyId, projectId, taskListId, data }: { companyId: number; projectId: number; taskListId: number; data: { order_index: number } }, { rejectWithValue }) => {
+    try {
+      const res = await postJson<{ data: TaskList }>(`/companies/${companyId}/projects/${projectId}/task-lists/${taskListId}/move`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to move task list');
+    }
+  }
+);
+
+// Fetch tasks for a task list
 export const fetchTasks = createAsyncThunk(
   'task/fetchTasks',
-  async ({ companyId, projectId }: { companyId: number; projectId: number }) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [
-      {
-        id: 1,
-        title: 'Design Homepage Mockup',
-        description: 'Create detailed mockup for the new homepage design',
-        task_list_id: 1,
-        assignee_id: 2,
-        assignee: {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          role: 'project_manager' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        priority: 'high' as const,
-        status: 'pending' as const,
-        due_date: '2024-02-15',
-        order_index: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        title: 'Set up Development Environment',
-        description: 'Configure development environment for the project',
-        task_list_id: 2,
-        assignee_id: 1,
-        assignee: {
-          id: 1,
-          name: 'John Doe',
-          email: 'john@example.com',
-          role: 'admin' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        priority: 'medium' as const,
-        status: 'in_progress' as const,
-        due_date: '2024-02-10',
-        order_index: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: 3,
-        title: 'Project Planning',
-        description: 'Complete initial project planning and requirements gathering',
-        task_list_id: 3,
-        assignee_id: 1,
-        assignee: {
-          id: 1,
-          name: 'John Doe',
-          email: 'john@example.com',
-          role: 'admin' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        priority: 'low' as const,
-        status: 'completed' as const,
-        due_date: '2024-01-30',
-        order_index: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
+  async ({ companyId, projectId, taskListId }: { companyId: number; projectId: number; taskListId: number }, { rejectWithValue }) => {
+    try {
+      const res = await getJson<{ data: Task[] }>(`/companies/${companyId}/projects/${projectId}/tasks?task_list_id=${taskListId}`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to fetch tasks');
+    }
   }
 );
 
+// Create a task
 export const createTask = createAsyncThunk(
   'task/createTask',
-  async (taskData: Omit<Task, 'id' | 'order_index' | 'created_at' | 'updated_at' | 'assignee'>) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      id: Date.now(),
-      ...taskData,
-      order_index: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+  async ({ companyId, projectId, data }: { companyId: number; projectId: number; data: Partial<Task> }, { rejectWithValue }) => {
+    try {
+      const res = await postJson<{ data: Task }>(`/companies/${companyId}/projects/${projectId}/tasks`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to create task');
+    }
+  }
+);
+
+// Update a task
+export const updateTask = createAsyncThunk(
+  'task/updateTask',
+  async ({ companyId, projectId, taskId, data }: { companyId: number; projectId: number; taskId: number; data: Partial<Task> }, { rejectWithValue }) => {
+    try {
+      const res = await putJson<{ data: Task }>(`/companies/${companyId}/projects/${projectId}/tasks/${taskId}`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to update task');
+    }
+  }
+);
+
+// Delete a task
+export const deleteTask = createAsyncThunk(
+  'task/deleteTask',
+  async ({ companyId, projectId, taskId }: { companyId: number; projectId: number; taskId: number }, { rejectWithValue }) => {
+    try {
+      await deleteRequest(`/companies/${companyId}/projects/${projectId}/tasks/${taskId}`);
+      return taskId;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to delete task');
+    }
+  }
+);
+
+// Move a task to another list/order
+export const moveTask = createAsyncThunk(
+  'task/moveTask',
+  async ({ companyId, projectId, taskId, data }: { companyId: number; projectId: number; taskId: number; data: { task_list_id: number; order_index: number } }, { rejectWithValue }) => {
+    try {
+      const res = await postJson<{ data: Task }>(`/companies/${companyId}/projects/${projectId}/tasks/${taskId}/move`, data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Failed to move task');
+    }
   }
 );
 
 const taskSlice = createSlice({
   name: 'task',
   initialState,
-  reducers: {
-    clearError: (state) => {
-      state.error = null;
-    },
-    updateTask: (state, action: PayloadAction<Partial<Task> & { id: number }>) => {
-      const index = state.tasks.findIndex(t => t.id === action.payload.id);
-      if (index !== -1) {
-        state.tasks[index] = { ...state.tasks[index], ...action.payload };
-      }
-    },
-    moveTask: (state, action: PayloadAction<{ taskId: number; newListId: number; newIndex: number }>) => {
-      const { taskId, newListId, newIndex } = action.payload;
-      const taskIndex = state.tasks.findIndex(t => t.id === taskId);
-      if (taskIndex !== -1) {
-        state.tasks[taskIndex].task_list_id = newListId;
-        state.tasks[taskIndex].order_index = newIndex;
-      }
-    },
-    removeTask: (state, action: PayloadAction<number>) => {
-      state.tasks = state.tasks.filter(t => t.id !== action.payload);
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(fetchTaskLists.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
       .addCase(fetchTaskLists.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.taskLists = action.payload;
+      })
+      .addCase(fetchTaskLists.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(createTaskList.fulfilled, (state, action) => {
+        state.taskLists.push(action.payload);
+      })
+      .addCase(updateTaskList.fulfilled, (state, action) => {
+        const idx = state.taskLists.findIndex(l => l.id === action.payload.id);
+        if (idx !== -1) state.taskLists[idx] = action.payload;
+      })
+      .addCase(deleteTaskList.fulfilled, (state, action) => {
+        state.taskLists = state.taskLists.filter(l => l.id !== action.payload);
+      })
+      .addCase(moveTaskList.fulfilled, (state, action) => {
+        const idx = state.taskLists.findIndex(l => l.id === action.payload.id);
+        if (idx !== -1) state.taskLists[idx] = action.payload;
       })
       .addCase(fetchTasks.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -176,14 +215,24 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch tasks';
+        state.error = action.payload as string;
       })
       .addCase(createTask.fulfilled, (state, action) => {
         state.tasks.push(action.payload);
+      })
+      .addCase(updateTask.fulfilled, (state, action) => {
+        const idx = state.tasks.findIndex(t => t.id === action.payload.id);
+        if (idx !== -1) state.tasks[idx] = action.payload;
+      })
+      .addCase(deleteTask.fulfilled, (state, action) => {
+        state.tasks = state.tasks.filter(t => t.id !== action.payload);
+      })
+      .addCase(moveTask.fulfilled, (state, action) => {
+        const idx = state.tasks.findIndex(t => t.id === action.payload.id);
+        if (idx !== -1) state.tasks[idx] = action.payload;
       });
   },
 });
 
-export const { clearError, updateTask, moveTask, removeTask } = taskSlice.actions;
 export default taskSlice.reducer;
 

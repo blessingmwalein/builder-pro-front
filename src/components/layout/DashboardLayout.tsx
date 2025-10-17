@@ -19,7 +19,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
         <main className="flex-1 overflow-y-auto">
-          <div className="py-6">
+          <div className="">
             {children}
           </div>
         </main>

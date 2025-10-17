@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchChatMessages, addMessage } from '@/lib/features/chat/chatSlice';
 import { formatDistanceToNow } from 'date-fns';
